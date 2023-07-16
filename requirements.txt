@@ -1,0 +1,4 @@
+--pre
+gql[aiohttp]
+py-cord
+requests
