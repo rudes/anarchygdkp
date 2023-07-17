@@ -4,6 +4,7 @@ import logging
 import configparser
 
 from wcl import parse_logs
+from discord import ButtonStyle
 
 logging.basicConfig(format="%(asctime)s %(name)s:%(levelname)-8s %(message)s",
                     filename="/var/log/gdkp_logeval.log", level=logging.INFO)
@@ -16,9 +17,12 @@ config = configparser.ConfigParser()
 config.read('bot.ini')
 
 class WoWLog(discord.ui.View):
-    def __init__(self, user: discord.Member):
+    def __init__(self, user: discord.Member, character: str):
         super().__init__()
         self.user = user
+        url = f'https://classic.warcraftlogs.com/character/us/grobbulus/{character}'
+        button = discord.ui.Button(label="Full Log", style=ButtonStyle.link, url=url)
+        self.add_item(button)
 
     async def role_add(self, role: str):
         try:
@@ -29,27 +33,25 @@ class WoWLog(discord.ui.View):
         except Exception as e:
             log.error(f"role_add,{type(e)},{e}")
 
-    @discord.ui.button(label="Approved")
+    @discord.ui.button(label="Approved", style=ButtonStyle.primary)
     async def approve(self,
         button: discord.ui.Button,
         interaction: discord.Interaction,
     ):
         await self.role_add('Approved')
         await interaction.response.send_message(f'{interaction.user.mention} gave {self.user.mention} Approved role.')
-        await interaction.message.delete()
         self.stop()
 
-    @discord.ui.button(label="Core")
+    @discord.ui.button(label="Core", style=ButtonStyle.green)
     async def core(self,
         button: discord.ui.Button,
         interaction: discord.Interaction,
     ):
         await self.role_add('Core')
         await interaction.response.send_message(f'{interaction.user.mention} gave {self.user.mention} Core role.')
-        await interaction.message.delete()
         self.stop()
 
-    @discord.ui.button(label="Decline")
+    @discord.ui.button(label="Decline", style=ButtonStyle.red)
     async def decline(self,
         button: discord.ui.Button,
         interaction: discord.Interaction,
@@ -61,10 +63,10 @@ class WoWLog(discord.ui.View):
                 await dm.send('Sorry you were declined based on your logs at this time. Please try again later. :)')
             except discord.Forbidden:
                 pass
-            await interaction.message.delete()
             self.stop()
         except Exception as e:
             log.error(f"decline,{type(e)},{e}")
+
 
 intents = discord.Intents.default()
 intents.members = True
@@ -74,13 +76,13 @@ wowlogs = bot.create_group('logs', 'Submit logs to Organizers.')
 @wowlogs.command()
 async def submit(
     ctx: discord.ApplicationContext,
-    logs: discord.Option(str, "exact name of your character on wowlogs"),
+    character: discord.Option(str, "exact name of your character on wowlogs"),
     message: discord.Option(str, "optional message for Organizers", required=False),
 ):
     try:
         chat = ctx.guild.get_channel(int(config['CHANNELS']['Logs']))
-        view = WoWLog(ctx.author)
-        avg = parse_logs(logs)
+        view = WoWLog(ctx.author, character)
+        avg = parse_logs(character)
         await chat.send(f'User: {ctx.author.mention}\nLogs: {avg}\nMessage: {message}', view=view)
         await ctx.respond('Thank you for your submission.', ephemeral=True, delete_after=5)
     except Exception as e:
