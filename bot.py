@@ -31,7 +31,7 @@ class WoWLog(discord.ui.View):
                 return
             await self.user.add_roles(role)
         except Exception as e:
-            log.error(f"role_add,{type(e)},{e}")
+            log.exception(f"role_add,{type(e)},{e}")
 
     @discord.ui.button(label="Approved", style=ButtonStyle.primary)
     async def approve(self,
@@ -65,37 +65,46 @@ class WoWLog(discord.ui.View):
                 pass
             self.stop()
         except Exception as e:
-            log.error(f"decline,{type(e)},{e}")
+            log.exception(f"decline,{type(e)},{e}")
 
 
 intents = discord.Intents.default()
 intents.members = True
 bot = discord.Bot(debug_guilds=[1130246056421109770], intents=intents)
 
-wowlogs = bot.create_group('logs', 'Submit logs to Organizers, only accepts Grobbulus characters, use message for special circumstances')
+wowlogs = bot.create_group('logs', 'Submit logs to Organizers, only accepts *Grobbulus* characters')
 @wowlogs.command()
 async def submit(
     ctx: discord.ApplicationContext,
-    character: discord.Option(str, "exact name of your character on wowlogs"),
+    character: discord.Option(str, "exact name of your character on grobbulus"),
     main: discord.Option(str, "optional exact name of your main character on grobbulus", required=False),
     message: discord.Option(str, "optional message for Organizers", required=False),
 ):
     try:
         chat = ctx.guild.get_channel(int(config['CHANNELS']['Logs']))
         view = WoWLog(ctx.author, character)
-        raider = WCLlogs(character)
-        post = f'User: {ctx.author.mention}'
-        post += (f'\nCharacter: {raider.class_name} ({raider.spec}) '
-               + f': {character} ({raider.historical_avg()}%)')
+        post = f'U: {ctx.author.mention}'
+        try:
+            r = WCLlogs(character)
+            post += (f'\nR: {r.class_name} ({r.spec}): '
+                + f'**{character}** ({r.highest_ilvl()} ilvl) '
+                + f'({r.historical_avg()}%) ({r.heroic_count()}/5)')
+        except IndexError as e:
+            post += f'\nR: **{character}** missing current phase.'
+
         if main:
-            main_logs = WCLlogs(main)
-            post += (f'\nMain: {main_logs.class_name} ({main_logs.spec}) '
-                   + f': {main} ({main_logs.historical_avg()}%)')
+            try:
+                m = WCLlogs(main)
+                post += (f'\nM: {m.class_name} ({m.spec}): '
+                    + f'**{main}** ({m.highest_ilvl()} ilvl) '
+                    + f'({m.historical_avg()}%) ({m.heroic_count()}/5)')
+            except IndexError as e:
+                post += f'\nM: **{main}** missing current phase.'
         if message:
-            post += f'\nMessage: {message}'
+            post += f'\n*{message}*'
         await chat.send(post, view=view)
         await ctx.respond('Thank you for your submission.', ephemeral=True, delete_after=5)
     except Exception as e:
-        log.error(f"submit,{type(e)},{e}")
+        log.exception(f"submit,{type(e)},{e}")
 
 bot.run(str(os.environ['DISCORD_BOTKEY']))
