@@ -7,3 +7,4 @@ services:
    - '/var/log:/var/log'
   environment:
    - DISCORD_BOTKEY=${DISCORD_BOTKEY}
+   - WCL_APIKEY=${WCL_APIKEY}
