@@ -6,23 +6,42 @@ from statistics import mean
 
 log = logging.getLogger(__name__)
 
-def parse_logs(character):
-    try:
+class WCLlogs(object):
+    def __init__(self, character: str):
+        self.character = character
         url = 'https://classic.warcraftlogs.com:443/v1/parses/character/{0}/grobbulus/us?timeframe=historical&api_key={1}'
-        r = requests.get(url.format(character, os.environ['WCL_APIKEY']))
+        self.url = url.format(character, os.environ['WCL_APIKEY'])
+        r = requests.get(self.url)
         if not isinstance(r.json(), list):
-            return
+            raise Exception("Unable to find character {character}: {r.json()['error']}")
+        self.data = r.json()
 
-        encounters = []
-        for entry in r.json():
-            if entry['size'] == 25:
-                encounters.append((entry['encounterID'], entry['percentile']))
+    @property
+    def id(self):
+        return self.data[0]['characterID']
 
-        tops = []
-        for enc in set([x[0] for x in encounters]):
-            parses = [x[1] for x in encounters if x[0] == enc]
-            tops.append(max(parses))
+    @property
+    def class_name(self):
+        return self.data[0]['class']
 
-        return round(mean(tops), 2)
-    except Exception as e:
-        log.error(f'parse_logs,{type(e)},{e}', exc_info=True)
+    @property
+    def spec(self):
+        return max(set([x['spec'] for x in self.data]), key = self.data.count)
+
+    def best(self, id: int):
+        return max(set([x['percentile'] for x in self.data if x['encounterID'] == id]))
+
+    def historical_avg(self):
+        try:
+            encounters = []
+            for entry in self.data:
+                if entry['size'] == 25:
+                    encounters.append(entry['encounterID'])
+
+            tops = []
+            for enc in set(encounters):
+                tops.append(self.best(enc))
+
+            return round(mean(tops), 2)
+        except Exception as e:
+            raise e

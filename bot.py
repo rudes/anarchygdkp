@@ -3,7 +3,7 @@ import discord
 import logging
 import configparser
 
-from wcl import parse_logs
+from wcl import WCLlogs
 from discord import ButtonStyle
 
 logging.basicConfig(format="%(asctime)s %(name)s:%(levelname)-8s %(message)s",
@@ -72,18 +72,28 @@ intents = discord.Intents.default()
 intents.members = True
 bot = discord.Bot(debug_guilds=[1130246056421109770], intents=intents)
 
-wowlogs = bot.create_group('logs', 'Submit logs to Organizers.')
+wowlogs = bot.create_group('logs', 'Submit logs to Organizers, only accepts Grobbulus characters, use message for special circumstances')
 @wowlogs.command()
 async def submit(
     ctx: discord.ApplicationContext,
     character: discord.Option(str, "exact name of your character on wowlogs"),
+    main: discord.Option(str, "optional exact name of your main character on grobbulus", required=False),
     message: discord.Option(str, "optional message for Organizers", required=False),
 ):
     try:
         chat = ctx.guild.get_channel(int(config['CHANNELS']['Logs']))
         view = WoWLog(ctx.author, character)
-        avg = parse_logs(character)
-        await chat.send(f'User: {ctx.author.mention}\nLogs: {avg}\nMessage: {message}', view=view)
+        raider = WCLlogs(character)
+        post = f'User: {ctx.author.mention}'
+        post += (f'\nCharacter: {raider.class_name} ({raider.spec}) '
+               + f': {character} ({raider.historical_avg()}%)')
+        if main:
+            main_logs = WCLlogs(main)
+            post += (f'\nMain: {main_logs.class_name} ({main_logs.spec}) '
+                   + f': {main} ({main_logs.historical_avg()}%)')
+        if message:
+            post += f'\nMessage: {message}'
+        await chat.send(post, view=view)
         await ctx.respond('Thank you for your submission.', ephemeral=True, delete_after=5)
     except Exception as e:
         log.error(f"submit,{type(e)},{e}")
