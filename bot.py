@@ -20,8 +20,10 @@ class WoWLog(discord.ui.View):
     def __init__(self, user: discord.Member, character: str):
         super().__init__()
         self.user = user
+        self.character = character
+
         url = f'https://classic.warcraftlogs.com/character/us/grobbulus/{character}'
-        button = discord.ui.Button(label="Full Log", style=ButtonStyle.link, url=url)
+        button = discord.ui.Button(label="Logs", style=ButtonStyle.link, url=url)
         self.add_item(button)
 
     async def role_add(self, role: str):
@@ -60,7 +62,11 @@ class WoWLog(discord.ui.View):
             await interaction.response.send_message(f'{interaction.user.mention} declined {self.user.mention}.')
             try:
                 dm = await self.user.create_dm()
-                await dm.send('Sorry you were declined based on your logs at this time. Please try again later. :)')
+                msg = ('Currently we are rostering raiders with a stronger combination '
+                       +'of Gear and Parses from the current phase of raids.\n'
+                       +f'Make some improvements to **{self.character}** '
+                       +'and come back for another shot :)')
+                await dm.send(msg)
             except discord.Forbidden:
                 pass
             self.stop()
@@ -76,10 +82,13 @@ wowlogs = bot.create_group('logs', 'Submit logs to Organizers, only accepts *Gro
 @wowlogs.command()
 async def submit(
     ctx: discord.ApplicationContext,
-    character: discord.Option(str, "exact name of your character on grobbulus"),
-    main: discord.Option(str, "optional exact name of your main character on grobbulus", required=False),
+    character: discord.Option(str, "Exact name of your character on Grobbulus"),
+    main: discord.Option(str, "optional Exact name of your main character on Grobbulus", required=False),
     message: discord.Option(str, "optional message for Organizers", required=False),
 ):
+    """
+    Submit your **Grobbulus** Character name for Organizers to evaluate
+    """
     try:
         chat = ctx.guild.get_channel(int(config['CHANNELS']['Logs']))
         view = WoWLog(ctx.author, character)
@@ -89,7 +98,7 @@ async def submit(
             post += (f'\nR: {r.class_name} ({r.spec}): '
                 + f'**{character}** ({r.highest_ilvl()} ilvl) '
                 + f'({r.historical_avg()}%) ({r.heroic_count()}/5)')
-        except IndexError as e:
+        except IndexError:
             post += f'\nR: **{character}** missing current phase.'
 
         if main:
