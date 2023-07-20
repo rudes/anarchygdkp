@@ -13,9 +13,9 @@ class WCLlogs(object):
         self.url = url.format(character, os.environ['WCL_APIKEY'])
         r = requests.get(self.url)
         if not r.json():
-            raise IndexError("No current parses for {character}")
+            raise IndexError(f"No current parses for {character}")
         if 'error' in r.json():
-            raise Exception("Unable to find character {character}: {r.json()['error']}")
+            raise Exception(f"Unable to find character {character}: {r.json()['error']}")
         self.data = r.json()
 
     @property
@@ -52,6 +52,8 @@ class WCLlogs(object):
                 if enc != 637:
                     tops.append(self.best_of25H(enc))
 
+            if tops == []:
+                return 0
             return round(mean(tops), 1)
         except Exception as e:
             raise e
