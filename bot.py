@@ -120,7 +120,8 @@ async def submit(
             await chat.send(post, view=view, file=gold_file)
         else:
             await chat.send(post, view=view)
-        await ctx.respond("Thank you for your submission.", ephemeral=True, delete_after=5)
+        await ctx.author.edit(nick=character)
+        await ctx.respond(f"Thank you for your submission. Changed your name to match {character}.", ephemeral=True, delete_after=5)
     except Exception as e:
         log.exception(f"submit,{type(e)},{e}")
 
