@@ -21,7 +21,7 @@ class WoWLog(discord.ui.View):
 
     async def role_add(self, role: str):
         try:
-            role = self.user.guild.get_role(int(config["ROLES"][role]))
+            role = self.user.guild.get_role(int(self.config["ROLES"][role]))
             if role is None:
                 log.error(f"role_add,NoneRole,role not found in guild")
                 return
