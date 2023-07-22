@@ -9,10 +9,11 @@ from discord.ext import commands
 log = logging.getLogger(__name__)
 
 class WoWLog(discord.ui.View):
-    def __init__(self, user: discord.Member, character: str):
+    def __init__(self, user: discord.Member, character: str, config):
         super().__init__(timeout=172800)
         self.user = user
         self.character = character
+        self.config = config
 
         url = f"https://classic.warcraftlogs.com/character/us/grobbulus/{character}"
         button = discord.ui.Button(label="Logs", style=ButtonStyle.link, url=url)
@@ -91,7 +92,7 @@ class Logs(commands.Cog):
         """
         try:
             chat = ctx.guild.get_channel(int(self.config["CHANNELS"]["Logs"]))
-            view = WoWLog(ctx.author, character)
+            view = WoWLog(ctx.author, character, self.config)
             post = f"U: {ctx.author.mention}"
             try:
                 r = WCLlogs(character)

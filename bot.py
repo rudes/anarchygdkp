@@ -18,7 +18,7 @@ config.read("bot.ini")
 
 intents = discord.Intents.default()
 intents.members = True
-bot = commands.Bot(debug_guilds=[1130246056421109770], intents=intents)
+bot = commands.Bot(debug_guilds=[1086303502894108783], intents=intents)
 
 bot.add_cog(Logs(bot, config))
 
