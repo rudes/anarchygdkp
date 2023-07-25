@@ -1,5 +1,5 @@
 up:
-	docker-compose up -d --build
+	docker compose up -d --build
 
 clean:
-	docker-compose down --rmi all
+	docker compose down --rmi all
