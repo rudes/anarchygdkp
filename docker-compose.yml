@@ -1,10 +1,31 @@
 version: "3.9"
 services:
  bot:
-  build: .
+  build: ./bot/
   restart: always
   volumes:
    - '/var/log:/var/log'
   environment:
    - DISCORD_BOTKEY=${DISCORD_BOTKEY}
    - WCL_APIKEY=${WCL_APIKEY}
+ web:
+  build: ./web/
+  container_name: anarchygdkp.com
+  restart: always
+  networks:
+    - web
+  volumes:
+    - '/var/log:/var/log'
+  labels:
+    - traefik.enable=true
+    - traefik.http.routers.anarchygdkp.entrypoints=web
+    - traefik.http.routers.anarchygdkp.rule=Host("anarchygdkp.com")
+ db:
+   image: redis:6.2.5-alpine
+   restart: always
+   volumes:
+     - '/var/opt/redis:/data'
+
+networks:
+  web:
+    external: true

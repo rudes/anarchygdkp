@@ -1,10 +1,3 @@
-# GDKP Log Evaluator
+# Anarchy GDKP
 
-Evaluates your wow logs and sends a breakdown to organizers.
-
-## Run
-
-```
-make up
-make clean
-```
+[Website]() and Discord bot for [Anarchy GDKP]()
